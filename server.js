@@ -10,7 +10,17 @@ const path = require('path')
 //middleware
 app.use('/src', express.static(path.join(__dirname, 'src')))
 
-app.get('/', (req, res) => {                               //send the html file
+app.delete('/api/todos/:id', async(req, res, next) => {
+    try {
+        const todo = await Todo.findByPk(req.params.id)
+        await todo.destroy()
+        res.sendStatus(204) //No content, need this line
+    } catch (err) {
+        next(err)
+    }
+})
+
+app.get('/', (req, res) => {   //send the html file
     res.sendFile(path.join(__dirname, 'index.html'))
 })
 
@@ -21,6 +31,8 @@ app.get("/api/todos", async (req, res, next) => {
     next(err);
   }
 });
+
+
 
 const Todo = sequelize.define("todo", {
   name: {
