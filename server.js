@@ -5,24 +5,37 @@ const sequelize = new Sequelize(
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const path = require('path')
+const path = require("path");
 
-//middleware
-app.use('/src', express.static(path.join(__dirname, 'src')))
+//Middleware
+app.use("/src", express.static(path.join(__dirname, "src")));
 
-app.delete('/api/todos/:id', async(req, res, next) => {
+app.use(express.json()); // need this middleware for req.body -- gives us JSON --POST/PUT only
+
+//Routes
+app.delete("/api/todos/:id", async (req, res, next) => {
+  try {
+    const todo = await Todo.findByPk(req.params.id);
+    await todo.destroy();
+    res.sendStatus(204); //No content, need this line
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/todos', async(req, res, next) => { //add a new todo
     try {
-        const todo = await Todo.findByPk(req.params.id)
-        await todo.destroy()
-        res.sendStatus(204) //No content, need this line
+        const todo = await Todo.create(req.body)  //req.body needs a middleware
+        res.sendStatus(201) //Created
     } catch (err) {
         next(err)
     }
 })
 
-app.get('/', (req, res) => {   //send the html file
-    res.sendFile(path.join(__dirname, 'index.html'))
-})
+app.get("/", (req, res) => {
+  //send the html file
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
 app.get("/api/todos", async (req, res, next) => {
   try {
@@ -31,8 +44,6 @@ app.get("/api/todos", async (req, res, next) => {
     next(err);
   }
 });
-
-
 
 const Todo = sequelize.define("todo", {
   name: {
